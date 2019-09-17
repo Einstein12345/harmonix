@@ -1,0 +1,16 @@
+package edu.moravian.schirripad;
+
+public enum ScaleTypes {
+	MAJOR,
+	MINOR,
+	HARMONIC_MINOR,
+	MELODIC_MINOR_ASCENDING,
+	MELODIC_MINOR_DESCENDING,
+	DIMINISHED,
+	DORIAN,
+	LYDIAN,
+	MIXOLYDIAN,
+	PHYRGIAN,
+	LOCRIAN
+
+}

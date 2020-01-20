@@ -1,6 +1,5 @@
 package edu.moravian.schirripad;
 
-import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 public class Main {

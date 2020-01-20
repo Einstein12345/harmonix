@@ -12,6 +12,8 @@ import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 
+import com.synthbot.audioplugin.vst.vst2.JVstHost2;
+
 import edu.moravian.schirripad.SequencedPlayback.SequencedEvent;
 import edu.moravian.schirripad.chords.AugmentedTriad;
 import edu.moravian.schirripad.chords.DiminishedTriad;
@@ -35,6 +37,7 @@ public class ModReciever implements Receiver, ActionListener {
 	private int ticksSinceLastSeq = 0;
 	private boolean isRecording;
 	private MidiDevice prox;
+	private JVstHost2 vst = null;
 
 	public static final int HALF_STEP = 1, WHOLE_STEP = 2, MINOR_SECOND = 1, MAJOR_SECOND = 2, DIMINISHED_THIRD = 2,
 			MINOR_THIRD = 3, MAJOR_THIRD = 4, DIMINISHED_FOURTH = 4, PERFECT_FOURTH = 5, AUGMENTED_FOURTH = 6,
@@ -57,6 +60,17 @@ public class ModReciever implements Receiver, ActionListener {
 			e.printStackTrace();
 		}
 
+	}
+
+	public ModReciever(MidiDevice prox, JVstHost2 vst) {
+		this.prox = prox;
+		try {
+			prox.open();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (vst.isSynth())
+			this.vst = vst;
 	}
 
 	@Override
@@ -538,5 +552,4 @@ public class ModReciever implements Receiver, ActionListener {
 			}
 		}
 	}
-
 }

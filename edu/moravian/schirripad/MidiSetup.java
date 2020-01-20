@@ -1,5 +1,6 @@
 package edu.moravian.schirripad;
 
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -87,8 +88,8 @@ public class MidiSetup {
 			e.printStackTrace();
 		}
 		ModReciever mr = new ModReciever(MidiSystem.getMidiDevice(outDev));
-
-		ControlFrame cf = new ControlFrame(mr);
+		if (!GraphicsEnvironment.isHeadless())
+			new ControlFrame(mr);
 
 		t.setReceiver(mr);
 

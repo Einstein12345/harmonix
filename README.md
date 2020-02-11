@@ -1,0 +1,2 @@
+# harmonix
+Harmonix is a MIDI Harmonization program designed to be installed on an embedded pedal system.  Conceptually, Harmonix is meant to take MIDI input notes, and harmonize them in order to synthesize unique melodies as well as full chordal progressions.  This is specifically designed to be used with one note MIDI devices such as an EWI, and after completion will be used for live performances as well as music composition.

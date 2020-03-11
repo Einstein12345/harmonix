@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.Receiver;
@@ -12,8 +13,11 @@ import javax.swing.Timer;
 
 import edu.moravian.schirripad.chords.Triad;
 
+//TODO Allow each SequencedPlayback object to have its own special VST 
+// reciever, so as to allow the sequenced playback to be played using 
+// different instrument that the main melody
 public class SequencedPlayback {
-	private LinkedList<SequencedEvent> events = new LinkedList<SequencedEvent>();
+	private SequencedList events;
 	private Iterator<SequencedEvent> evIter = null;
 	private Receiver rec;
 	private Timer timer;
@@ -26,7 +30,7 @@ public class SequencedPlayback {
 		init();
 	}
 
-	public SequencedPlayback(int delay, Receiver rec, LinkedList<SequencedEvent> events) {
+	public SequencedPlayback(int delay, Receiver rec, SequencedList events) {
 		this.events = events;
 		setDelay(delay);
 		this.rec = rec;
@@ -62,14 +66,14 @@ public class SequencedPlayback {
 		events.add(se);
 	}
 
-	public LinkedList<SequencedEvent> fillChords(LinkedList<SequencedEvent> ev, int key, ScaleTypes scaleType, int voices,
+	public SequencedList fillChords(LinkedList<SequencedEvent> ev, int key, ScaleTypes scaleType, int voices,
 			int maxInterval) throws InvalidMidiDataException {
 		// TODO Create chordal passages using voice leading/partwriting rules.
 		if (voices <= 1)
-			return ev;
+			return (SequencedList) ev;
 		if (maxInterval < ModReciever.OCTAVE)
 			maxInterval = ModReciever.OCTAVE;
-		LinkedList<SequencedEvent> nuevo = new LinkedList<SequencedEvent>();
+		SequencedList nuevo = new SequencedList(voices);
 		int lroot = -1, lthird = -1, lfifth = -1;
 		int[] lvoices = new int[voices];
 		int[] nvoices = new int[voices];
@@ -79,9 +83,9 @@ public class SequencedPlayback {
 			int root = t.getRoot();
 			int third = t.getThird();
 			int fifth = t.getFifth();
-			ShortMessage cm1 = null, cm2 = null, cm3 = null;
 
 			if (lroot == -1 && lthird == -1 && lfifth == -1) {
+				// If this is the first chord, simply populate the voices
 				int oct = 0;
 				for (int i = 5; i < voices + 5; i++) {
 					if (i % 3 == 0) {
@@ -95,26 +99,66 @@ public class SequencedPlayback {
 						nvoices[i - 5] = root + oct;
 				}
 			} else {
-				int[] vdelts = new int[voices];
-				for (int i = 0; i < vdelts.length; i++) {
-					vdelts[i] = Math.abs(nvoices[i] - lvoices[i]);
+				// Place voices in correct positions based on note deltas
+				int oct = 0;
+				for (int i = 0; i < voices; i++) {
+					// Get the relative note numbers
+					int lnote = (lvoices[i] % 12);
+					int aroot = root % 12;
+					int athird = third % 12;
+					int afifth = fifth % 12;
+					// Calculate note deltas
+					int droot = -1, dthird = -1, dfifth = -1;
+					droot = Math.abs(lnote - aroot);
+					dthird = Math.abs(lnote - athird);
+					dfifth = Math.abs(lnote - afifth);
+					// Compare deltas, choose smallest
+					if (droot < dthird && droot < dfifth) {
+						// Assign voice position to root
+						nvoices[i] = root + oct;
+					} else if (dthird < droot && dthird < dfifth) {
+						// Assign voice position to third
+						nvoices[i] = third + oct;
+					} else if (dfifth < droot && dfifth < dthird) {
+						// Assign voice position to fifth
+						nvoices[i] = fifth + oct;
+					}
+					// Increase octave by one every 3rd voice
+					if (i % 3 == 0)
+						oct += 12;
 				}
-				// Check which voices are the closest to the next chord member, and adjust them
-				// as such, as well as dynamically populate an array with the voices required,
-				// based on the set max distance apart
+
 			}
 			for (int i = 0; i < nvoices.length; i++) {
+				// Set the old voice to be what the new one is
 				lvoices[i] = nvoices[i];
+				// Create and assign a new ShortMessage
+				ShortMessage next = new ShortMessage();
+				next.setMessage(cur.getCommand(), cur.getChannel(), nvoices[i], cur.getData2());
+				// Add this message as a sequencedevent
+				nuevo.add(new SequencedEvent(next, e.getLength()));
+				// Clean the new voices array
 				nvoices[i] = -1;
 			}
-			SequencedEvent s1 = new SequencedEvent(cm1, e.getLength());
-			SequencedEvent s2 = new SequencedEvent(cm2, e.getLength());
-			SequencedEvent s3 = new SequencedEvent(cm3, e.getLength());
-			nuevo.add(s1);
-			nuevo.add(s2);
-			nuevo.add(s3);
+			// Assign the old triad with the new triads values
+			lthird = third;
+			lfifth = fifth;
+			lroot = root;
 		}
 		return nuevo;
+	}
+
+	private class SequencedList extends LinkedList<SequencedEvent> {
+		private int voices = 1;
+
+		public SequencedList(int voices) {
+			if (voices != 0)
+				this.voices = voices;
+		}
+
+		public int getVoices() {
+			return voices;
+		}
 	}
 
 	// Reads from list and fires events based on length defined in SequencedEvent
@@ -129,13 +173,21 @@ public class SequencedPlayback {
 					evIter = events.iterator();
 				}
 
-				SequencedEvent seq = evIter.next();
-				rec.send(seq.getMessage(), -1);
+				int voices = events.getVoices();
+				int len = -1;
+				for (int i = 0; i < voices; i++) {
+					SequencedEvent seq = evIter.next();
+					if (seq.getMessage().getCommand() == ShortMessage.NOTE_ON && len == -1) {
+						len = seq.getLength();
+					}
+					rec.send(seq.getMessage(), -1);
+				}
 				delaySinceLast = 0;
 				// Only check length if its a NOTE_ON event, otherwise do not reset
 				// delayTilNext, so the next event fires immediately after.
-				if (seq.getMessage().getCommand() == ShortMessage.NOTE_ON)
-					delayTilNext = seq.getLength();
+				if (len != -1) {
+					delayTilNext = len;
+				}
 			}
 			delaySinceLast += 10;
 		}

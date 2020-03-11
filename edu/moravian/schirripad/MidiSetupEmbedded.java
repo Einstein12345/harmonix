@@ -16,9 +16,11 @@ public class MidiSetupEmbedded {
 
 	public void init() throws MidiUnavailableException, IOException {
 		// TODO Specify midi output
+		// Get the synthesizer file location
 		File amsynth = new File("/usr/local/lib/amsynth_vst.so");
 		ModReciever mr = null;
 		JVstHost2 vst = null;
+		// If the synth is installed, load it, otherwise send it directly to MIDI out
 		if (amsynth.exists()) {
 			System.out.println("Found synth.so, attempting to generate VST host...");
 			try {

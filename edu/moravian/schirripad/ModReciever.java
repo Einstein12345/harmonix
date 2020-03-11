@@ -240,6 +240,13 @@ public class ModReciever implements Receiver, ActionListener {
 		}
 	}
 
+	/**
+	 * Check if a note is within a certain key
+	 * @param tonic The note to be used as a scalar tonic
+	 * @param key The key pressed
+	 * @param scaleType The type of scale to use
+	 * @return True if the note is diatonically in the scale
+	 */
 	public static boolean isNoteInKey(int tonic, int key, ScaleTypes scaleType) {
 		int note = (key % 12);
 		if (note == 0)
@@ -269,10 +276,33 @@ public class ModReciever implements Receiver, ActionListener {
 					|| (note == tonic + MAJOR_SIXTH) || (note == tonic + MINOR_SEVENTH))
 				return true;
 			break;
+		case DIMINISHED:
+			break;
+		case LOCRIAN:
+			break;
+		case LYDIAN:
+			break;
+		case MELODIC_MINOR_ASCENDING:
+			break;
+		case MELODIC_MINOR_DESCENDING:
+			break;
+		case MIXOLYDIAN:
+			break;
+		case PHYRGIAN:
+			break;
+		default:
+			break;
 		}
 		return false;
 	}
 
+	/**
+	 * 
+	 * @param tonic The note to be used as tonic
+	 * @param note The note to check
+	 * @param scaleType The type of scale to use
+	 * @return
+	 */
 	public static boolean isNoteInKeyAbs(int tonic, int note, ScaleTypes scaleType) {
 		switch (scaleType) {
 		default: // Default = Major
@@ -317,6 +347,13 @@ public class ModReciever implements Receiver, ActionListener {
 		return false;
 	}
 
+	/**
+	 * Harmonize a note into a triad using diatonic harmonizations
+	 * @param tonic The note to be used as scalar tonic
+	 * @param key The key pressed
+	 * @param scaleType The type of scale to use
+	 * @return
+	 */
 	public static Triad harmonizeDiatonically(int tonic, int key, ScaleTypes scaleType) {
 		int chordRoot = (key % 12) - tonic;
 		int rootAlteration = 0;
@@ -433,6 +470,11 @@ public class ModReciever implements Receiver, ActionListener {
 		return mt;
 	}
 
+	/**
+	 * Adjust a note to match the range defined by MIDI
+	 * @param note The note to be adjusted
+	 * @return The adjusted note
+	 */
 	public int alterNoteToRange(int note) {
 		while (note > 120) {
 			note = note - 12;
@@ -472,6 +514,11 @@ public class ModReciever implements Receiver, ActionListener {
 		return doMelodicallyInvert;
 	}
 
+	/**
+	 * Add a harmonic interval to be played along with whatever note is being played
+	 * @param hsteps The interval to be played in half steps (1-12)
+	 * @return False if the interval is out of range
+	 */
 	public boolean addHarmonicInterval(int hsteps) {
 		if (hsteps <= 0) {
 			return false;
@@ -485,6 +532,10 @@ public class ModReciever implements Receiver, ActionListener {
 		return true;
 	}
 
+	/**
+	 * Remove a specific harmonic interval
+	 * @param hsteps The interval to remove in half steps
+	 */
 	public void removeHarmonicInterval(int hsteps) {
 		if (hsteps <= 0)
 			return;
@@ -494,6 +545,10 @@ public class ModReciever implements Receiver, ActionListener {
 			harmIntervals.remove(hsteps);
 	}
 
+	/**
+	 * Set the tonic globally
+	 * @param tonic The note to use as tonic
+	 */
 	public void setTonic(int tonic) {
 		while (tonic > 12) {
 			tonic = tonic - 12;
@@ -504,10 +559,18 @@ public class ModReciever implements Receiver, ActionListener {
 		this.tonic = tonic;
 	}
 
+	/**
+	 * Set the scale type globally
+	 * @param scale The type of scale to use
+	 */
 	public void setScaleType(ScaleTypes scale) {
 		this.scaleType = scale;
 	}
 
+	/**
+	 * Set the monophonic harmonization interval
+	 * @param inter The interval to be harmonized in half steps
+	 */
 	public void setHarmonizationInterval(int inter) {
 		while (inter > 12) {
 			inter = inter - 12;
@@ -518,6 +581,9 @@ public class ModReciever implements Receiver, ActionListener {
 
 	}
 
+	/**
+	 * MIDI PANIC
+	 */
 	public void panic() {
 		for (int i = 0; i < 128; i++) {
 			for (int j = 0; j < 17; j++) {
